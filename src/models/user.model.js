@@ -16,8 +16,8 @@ const userSchema= new Schema({
         required: [true, 'constraseña requerida']},
     imgfirme: {type: String,
         required:[true, 'Imagen de firma es requerida']},
-    // pdfArchivo: {type: String,
-    // required:[false, "Pdf es requerido"]}
+    pdfArchivo: {type: String,
+    required:[false, "Pdf es requerido"]}
 
 })
 

@@ -8,14 +8,16 @@ const crypto = require('crypto');
 const createUser = async (req, res) => {
   try {
     req.body.password = await bcrypt.hash(req.body.password, 12);
+
+    
     const user = await User.create({
       username: req.body.username,
       empresa: req.body.empresa,
       tenantId: req.body.tenantId,
       email: req.body.email,
       password: req.body.password,
-      imgfirme: req.file ? req.file.path : null ,     // pdfarchivo: req.file.path
-      // pdfArchivo: req.file ? req.file.path : null      
+      imgfirme: req.files['imgfirme'][0].filename,
+      pdfArchivo: req.files['pdfArchivo'][0].filename,
 
     });
 
