@@ -16,8 +16,7 @@ const createUser = async (req, res) => {
       tenantId: req.body.tenantId,
       email: req.body.email,
       password: req.body.password,
-      imgfirme: req.files['imgfirme'][0].filename,
-      pdfArchivo: req.files['pdfArchivo'][0].filename,
+      imgfirme: req.files.imgfirme,
 
     });
 

@@ -5,10 +5,7 @@ const { postUser, postLogin, resetPasswordPost, restablecerPassword } = require(
 
 const routes = express.Router();
 
-routes.post('/registrar', upload.fields([
-    { name: 'imgfirme', maxCount: 1 },  // Para imágenes
-    { name: 'pdfArchivo', maxCount: 1 }         // Para archivos PDF
-  ]), postUser);
+routes.post('/registrar', upload.single("imgFirme"), postUser);
   
 routes.post('/iniciarSesion', postLogin);
 routes.post('/reset-password', resetPasswordPost);

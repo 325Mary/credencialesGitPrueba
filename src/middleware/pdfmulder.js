@@ -1,28 +1,20 @@
-const multer = require("multer")
+const multer = require("multer");
 
+const path = require('path');
 
-
-
-// En tu archivo multerMiddleware.js
-const pdfStorage = multer.diskStorage({
+const storage = multer.diskStorage({
     destination: (req, file, callback) => {
-        callback(null, "./public/pdfUploads");
+        const uploadPath = path.join(__dirname, '../public/pdfUploads');
+        callback(null, uploadPath);
     },
     filename: (req, file, callback) => {
         callback(null, Date.now() + "-" + file.originalname);
     }
 });
 
+
 const pdfUpload = multer({
-    storage: pdfStorage,
-    fileFilter: (req, file, callback) => {
-        // Verificar que el archivo sea un PDF
-        if (file.mimetype === "application/pdf") {
-            callback(null, true);
-        } else {
-            callback(new Error("Solo se permiten archivos PDF"));
-        }
-    }
+    storage: storage,
 });
 
-module.exports= pdfUpload
+module.exports = pdfUpload;
