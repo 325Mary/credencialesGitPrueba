@@ -1,20 +1,31 @@
 const multer = require("multer");
 
-const path = require('path');
 
 const storage = multer.diskStorage({
     destination: (req, file, callback) => {
-        const uploadPath = path.join(__dirname, '../public/pdfUploads');
-        callback(null, uploadPath);
+        callback(null, "./public/uploads");
     },
     filename: (req, file, callback) => {
         callback(null, Date.now() + "-" + file.originalname);
     }
 });
 
+const fileFilter = (req, file, callback) =>{
+    const allowedMimeTypes= ["application/pdf", "image/png", "image/jpg", "image/jpeg"]
 
-const pdfUpload = multer({
+    if (allowedMimeTypes.includes(file.mimetype))
+    {
+        callback(null, true)
+    }
+    else {
+        callback(new Error("solo se permite archivos pdf y jpg"), false)
+    }
+    
+}
+
+const pdfAndImgUpload = multer({
     storage: storage,
+    fileFilter: fileFilter
 });
 
-module.exports = pdfUpload;
+module.exports = pdfAndImgUpload;

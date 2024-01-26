@@ -16,7 +16,7 @@ const createUser = async (req, res) => {
       tenantId: req.body.tenantId,
       email: req.body.email,
       password: req.body.password,
-      imgfirme: req.files.imgfirme,
+      imgfirme:  req.file ? req.file.path : null
 
     });
 

@@ -1,51 +1,26 @@
-const { sendEmail } = require('../services/company.service');
-const Company = require('../models/company.model');
-const { ResponseStructure } = require("../helpers/ResponseStructure");
+const Controller = {};
 
-const controller = {}
+const {
+    newCompany,
+    getCompanies,
+    deleteCompany
+} = require("../services/company.service");
 
-controller.sendCompany = async (req, res) => {
-  try {
-    
-    const body = req.body;
-    const newCompany = new Company(body);
-    await newCompany.save();
 
-    const emailContent = `
-      <p>Los datos de la nueva empresa son:</p>
-      <ul>
-        <li>Nombre: ${newCompany.nameCompany}</li>
-        <li>Teléfono: ${newCompany.telephone}</li>
-        <li>NIT: ${newCompany.tenantId}</li>
-        <li>Email: ${newCompany.email}</li>
-        <li>Dirección: ${newCompany.direction}</li>
-        <li>Runt: ${newCompany.pdfRunt }</li>
-      </ul>
-    `;
-
-    await sendEmail({
-      to: 'litterbox212@gmail.com',
-      subject: 'Solicitud de Nueva Empresa',
-      html: emailContent
-    });
-
-    ResponseStructure.status = 201;
-    ResponseStructure.message = "Datos de empresa enviados exitosamente";
-    ResponseStructure.data = newCompany;
-    res.status(ResponseStructure.status).send(ResponseStructure);
-  }  catch (error) {
-    if (error.name === 'ValidationError') {
-      return res.status(400).json({
-        message: "Error de validación",
-        errors: error.errors
-      });
-    }
-
-    // Manejo de otros errores
-    res.status(500).json({
-      message: "Error interno del servidor"
-    });
-  }
+Controller.getCompanies = async (req, res) => {
+  const listCompanies = await getCompanies();
+  res.json(listCompanies); 
 };
 
-module.exports = controller;
+Controller.newCompany = async (req, res) => {
+  await newCompany(req.body);
+  res.send("Empresa guardada exitosamente");
+};
+
+Controller.deleteCompany = async (req, res) => {
+  const idParam = req.params.idCompany;
+  const response = await deleteCompany(idParam);
+  res.send(response);
+};
+
+module.exports = Controller;

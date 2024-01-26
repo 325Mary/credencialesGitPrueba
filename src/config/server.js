@@ -1,6 +1,7 @@
 const express = require("express");
 const usersRoutes=  require('../routes/user.routes.js')
-const companyRoutes = require( '../routes/compay.routes')
+const sendcompanyRoutes = require( '../routes/send.compay.routes')
+const company = require("../routes/company.routes")
 const cors = require('cors');
 
 
@@ -12,7 +13,7 @@ const port = 3200;
 
 
 app.use(express.json());
-app.use(usersRoutes, companyRoutes)
+app.use(usersRoutes, sendcompanyRoutes, company)
 
 app.set("port", process.env.PORT || port);
 

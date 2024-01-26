@@ -1,6 +1,6 @@
 const {model, Schema} = require('mongoose')
 
-const companySchema= new Schema({
+const sendCompanySchema= new Schema({
         nameCompany: {type: String,
         required:[true, 'nombre empresa es requerido']},
         telephone: {type: String,
@@ -21,4 +21,4 @@ const companySchema= new Schema({
 
 
 
-module.exports = model('company', companySchema, "companys")
+module.exports = model('sendCompany', sendCompanySchema, "SendCompanys")

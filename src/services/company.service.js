@@ -1,37 +1,32 @@
-const nodemailer = require('nodemailer');
+const companySchema = require('../models/compay.model');
 
 
-
-const sendEmail = async ({ to, subject, text, html }) => {
-  // Configurar el transporter de Nodemailer
-  let transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    auth: {
-      user: 'litterbox212@gmail.com',
-      pass: 'rtpr yunf crkt daif'  // Para un entorno de producción, usa variables de entorno
-    }
-  });
-
-  // Configurar las opciones del correo electrónico
-  let mailOptions = {
-    to: to,
-    subject: subject,
-    text: text,
-    html: html  // Puede ser una cadena HTML para un correo electrónico con formato
+const newCompany = async (company) => {
+  
+    let newCompany = new companySchema(company);
+    return await newCompany.save();
   };
 
-  // Enviar el correo electrónico
-  try {
-    let info = await transporter.sendMail(mailOptions);
-    console.log('Email enviado: %s', info.messageId);
-    return info;
-  } catch (error) {
-    console.error('Error al enviar el email:', error);
-    throw error;
-  }
-};
+const getCompanies = async () => {
+    return await companySchema.find();
+  };
+   
+const deleteCompany = async (id) => {
+    try {
+      const company = await companySchema.findOne({ _id: id });
+      if (company) {
+        await companySchema.findOneAndDelete({ _id: id });
+        return "Empresa eliminado con exito";
+      } else {
+        return "No se encontro esta empresa";
+      }
+    } catch (error) {
+      return "Ocurrio un error eliminado el empresa";
+    }
+  };
 
 module.exports = {
-    sendEmail
+    newCompany,
+    getCompanies,
+    deleteCompany
 };
