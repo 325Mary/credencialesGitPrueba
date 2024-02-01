@@ -1,5 +1,9 @@
-const { createUser, loginUser, resetPassword, restablecerPassword } = require('../services/user.services');
+const { createUser, loginUser, resetPassword, restablecerPassword, getUsers } = require('../services/user.services');
 const User = require('../models/user.model');
+const companyModel = require('../models/compay.model')
+const rolModel= require ('../models/roles.model')
+const ResponseStructure = require('../helpers/ResponseStructure')
+const userRoleService = require('../services/user.services');
 
 
 const controller = {};
@@ -56,7 +60,35 @@ controller.restablecerPassword = async (req, res) => {
 
 
 
+controller.getUsers = async (req, res) => {
+  try {
+    const listUsers = await User.find({ rol: null }).populate({
+      path: 'tenantId',
+      model: companyModel,
+    })
+    .populate({
+      path: 'rol',
+      mode: rolModel
+    })
 
+    res.json(listUsers); // Elimina res.send(ResponseStructure)
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+};
+
+controller.actualizarRol = async (req, res) => {
+  try {
+    const { userId, nuevoRolId } = req.body;
+
+    const resultado = await userRoleService.actualizarRolUsuario(userId, nuevoRolId);
+
+    res.status(200).json(resultado);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+};
 
 
 module.exports = controller;

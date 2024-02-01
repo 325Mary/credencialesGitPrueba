@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const Rol = require('../models/roles.model')
+const nodemailer = require('nodemailer');
 
 
 
@@ -16,6 +18,8 @@ const createUser = async (req, res) => {
       tenantId: req.body.tenantId,
       email: req.body.email,
       password: req.body.password,
+      telephone: req.body.telephone,
+      direction: req.body.direction,
       imgfirme:  req.file ? req.file.path : null
 
     });
@@ -88,6 +92,9 @@ const restablecerPassword = {
 };
 
 
+
+
+
 function crearToken(user) {
   const payload = {
     user_id: user._id,
@@ -95,11 +102,66 @@ function crearToken(user) {
   return jwt.sign(payload, 'running');
 }
 
+const getUsers = async () => {
+  return await User.find();
+};
+
+const actualizarRolUsuario = async (userId, nuevoRolId) => {
+  try {
+    const usuario = await User.findById(userId);
+    if (!usuario) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    usuario.rol = nuevoRolId;
+    await usuario.save();
+
+    // Lógica para enviar el correo de confirmación
+    await enviarCorreoConfirmacion(usuario.email, usuario.username);
+
+    // Responder al cliente
+    return { mensaje: 'Rol actualizado exitosamente y correo de confirmación enviado' };
+  } catch (error) {
+    console.error('Error al actualizar el rol o enviar el correo de confirmación:', error);
+    // Manejo de error: puedes elegir responder con un mensaje de error específico
+    throw error;
+  }
+};
+
+
+const enviarCorreoConfirmacion = async (email, username) => {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    service: 'gmail',
+    auth: {
+      user: 'litterbox212@gmail.com',
+      pass: 'rtpr yunf crkt daif'
+    }
+  });
+
+  const mailOptions = {
+    from: 'litterbox212@gmail.com',
+    to: email,
+    subject: 'Confirmación de Usuario',
+    text: `Hola ${username}, tu rol ha sido asignado correctamente. Gracias por registrarte.`
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    console.log('Correo de confirmación enviado a', email);
+  } catch (error) {
+    console.error('Error al enviar el correo de confirmación:', error);
+    throw error;
+  }
+};
 
 
 module.exports = {
   createUser,
   loginUser,
   resetPassword,
-  restablecerPassword
+  restablecerPassword,
+  getUsers,
+  actualizarRolUsuario
 };
