@@ -35,60 +35,19 @@ const loginUser = async (req, res) => {
   try {
     const user = await User.findOne({ email: req.body.email });
     if (!user) {
-      return res.json({ error: 'Error en usuario/contraseña' });
+      return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
     const pass = await bcrypt.compare(req.body.password, user.password);
     if (!pass) {
-      return res.json({ error: 'Error en usuario/contraseña' });
+      return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    res.json({ success: 'login correcto', token: crearToken(user) });
+    res.json({ success: 'Inicio de sesión correcto', token: crearToken(user) });
   } catch (e) {
     console.error('Error:', e);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Error interno del servidor' });
   }
-};
-
-
-const resetPassword = {
-  generateToken: async (email) => {
-    const token = jwt.sign({
-      email,
-    }, process.env.JWT_SECRET, {
-      expiresIn: '1h',
-    });
-
-    return token;
-  },
-
-  sendEmail: async (email, token) => {
-    // Aquí puedes agregar lógica adicional si es necesario
-    return { success: true, message: 'Token generado correctamente.' };
-  },
-};
-
-
-const restablecerPassword = {
-  processResetToken: async (token) => {
-    try {
-      // Decodificar el token para obtener la información del usuario (en este caso, el correo electrónico)
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET);
-
-      // Buscar el usuario en la base de datos por el correo electrónico
-      const user = await User.findOne({ email: decodedToken.email });
-
-      if (!user) {
-        throw new Error('Usuario no encontrado.');
-      }
-
-      // Devuelve el usuario encontrado para que el controlador pueda permitir al usuario restablecer la contraseña.
-      return user;
-    } catch (error) {
-      console.error('Error al procesar el token:', error);
-      throw new Error('Error al procesar el token.');
-    }
-  },
 };
 
 
@@ -99,7 +58,7 @@ function crearToken(user) {
   const payload = {
     user_id: user._id,
   };
-  return jwt.sign(payload, 'running');
+  return jwt.sign(payload,  process.env.JWT_SECRET, { expiresIn: '1h' });
 }
 
 const getUsers = async () => {
@@ -156,12 +115,77 @@ const enviarCorreoConfirmacion = async (email, username) => {
   }
 };
 
+//restablecer contraseña
+
+const generarCodigoRestablecimiento = (email) => {
+  const hash = crypto.createHash('sha256').update(email).digest('hex').toUpperCase();
+  return hash.substring(0, 6); // Puedes ajustar la longitud del código según tus necesidades
+};
+
+const enviarCorreoRestablecimiento = async (email, codigo) => {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    service: 'gmail',
+    auth: {
+      user: 'litterbox212@gmail.com',
+      pass: 'rtpr yunf crkt daif'
+    }
+  });
+
+  const mailOptions = {
+      from: 'litterbox212@gmail.com',
+      to: email,
+      subject: 'Código de Restablecimiento de Contraseña',
+      text: `Tu código de restablecimiento es: ${codigo}`,
+  };
+
+  try {
+      await transporter.sendMail(mailOptions);
+      console.log('Correo de restablecimiento enviado a', email);
+  } catch (error) {
+      console.error('Error al enviar el correo de restablecimiento:', error);
+      throw error;
+  }
+};
+
+const restablecerContraseña = async (email, codigo, nuevaContraseña) => {
+  try {
+      console.log(`Intento de restablecimiento de contraseña para ${email} con código ${codigo}`);
+
+      const usuario = await User.findOne({ resetCode: codigo, email: email });
+
+      if (!usuario) {
+          console.error(`Código de restablecimiento inválido para ${email}: ${codigo}`);
+          throw new Error('Código de restablecimiento inválido');
+      }
+
+      console.log(`Usuario encontrado para ${email}:`, usuario);
+
+      // Restablecer la contraseña y limpiar el código
+      usuario.password = await bcrypt.hash(nuevaContraseña, 12);
+      usuario.resetCode = null;
+      await usuario.save();
+
+      return { success: 'Contraseña restablecida con éxito' };
+  } catch (error) {
+      console.error('Error al restablecer la contraseña:', error);
+      throw error;
+  }
+
+
+
+
+
+};
+
 
 module.exports = {
   createUser,
   loginUser,
-  resetPassword,
-  restablecerPassword,
   getUsers,
-  actualizarRolUsuario
+  actualizarRolUsuario,
+  generarCodigoRestablecimiento,
+  enviarCorreoRestablecimiento,
+  restablecerContraseña,
 };

@@ -1,4 +1,6 @@
-const { createUser, loginUser, resetPassword, restablecerPassword, getUsers } = require('../services/user.services');
+const { createUser, loginUser, resetPassword, restablecerPassword, getUsers, generarCodigoRestablecimiento,
+  enviarCorreoRestablecimiento,
+  restablecerContraseña,} = require('../services/user.services');
 const User = require('../models/user.model');
 const companyModel = require('../models/compay.model')
 const rolModel= require ('../models/roles.model')
@@ -8,58 +10,19 @@ const userRoleService = require('../services/user.services');
 
 const controller = {};
 
+//crear usuario 
 controller.postUser = async (req, res) => {
   await createUser(req, res);
 };
 
+//iniciar sesion
 controller.postLogin = async (req, res) => {
   await loginUser(req, res);
 };
 
 
-controller.resetPasswordPost = async (req, res) => {
-  const { email } = req.body;
 
-  try {
-    // Verificar si el correo existe en tu sistema
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      return res.status(404).json({ success: false, message: 'Correo no encontrado en el sistema.' });
-    }
-
-    // Generar el token
-    const token = await resetPassword.generateToken(email);
-
-    // Aquí puedes decidir qué hacer con el token, por ejemplo, almacenarlo en la base de datos
-    // o enviarlo como respuesta al cliente para que maneje el restablecimiento de la contraseña.
-
-    // En este ejemplo, simplemente respondemos con el token (esto podría ser un riesgo de seguridad en un entorno de producción)
-    res.json({ success: true, token });
-  } catch (error) {
-    console.error('Error al generar el token:', error);
-    res.status(500).json({ success: false, message: 'Error al generar el token.' });
-  }
-};
-
-controller.restablecerPassword = async (req, res) => {
-  const { token } = req.query;
-
-  try {
-    // Procesar el token utilizando la función del servicio
-    const user = await restablecerPassword.processResetToken(token);
-
-    // Permitir que el usuario establezca una nueva contraseña (puedes hacerlo a través de un formulario en tu página)
-    // Después de establecer la nueva contraseña, puedes invalidar o eliminar el token para mayor seguridad.
-
-    res.json({ success: true, message: 'Token válido. Permitir al usuario restablecer la contraseña.' });
-  } catch (error) {
-    res.status(500).json({ success: false, message: error.message });
-  }
-};
-
-
-
+//listar usuarios
 controller.getUsers = async (req, res) => {
   try {
     const listUsers = await User.find({ rol: null }).populate({
@@ -77,6 +40,7 @@ controller.getUsers = async (req, res) => {
   }
 };
 
+// actualizar roll de usuario
 controller.actualizarRol = async (req, res) => {
   try {
     const { userId, nuevoRolId } = req.body;
@@ -90,5 +54,54 @@ controller.actualizarRol = async (req, res) => {
   }
 };
 
+//restablecer contraseña
+
+controller.solicitarRestablecimiento = async (req, res) => {
+  try {
+      const { email } = req.body;
+
+      const usuario = await User.findOne({ email: email });
+
+      if (!usuario) {
+          return res.status(404).json({ error: 'Usuario no encontrado' });
+      }
+
+      const codigoRestablecimiento = generarCodigoRestablecimiento(email);
+      usuario.resetCode = codigoRestablecimiento;
+      await usuario.save();
+
+      await enviarCorreoRestablecimiento(email, codigoRestablecimiento);
+
+      res.json({ success: 'Solicitud de restablecimiento enviada con éxito' });
+  } catch (error) {
+      console.error('Error al solicitar restablecimiento:', error);
+      res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+controller.restablecerContraseña = async (req, res) => {
+  try {
+    const { email, codigo, nuevaContraseña } = req.body;
+
+    console.log(`Solicitud de restablecimiento de contraseña para ${email} con código ${codigo}`);
+
+    const resultado = await restablecerContraseña(email, codigo, nuevaContraseña);
+
+    console.log(`Contraseña restablecida con éxito para ${email}`);
+    res.json(resultado);
+  } catch (error) {
+    console.error('Error al restablecer la contraseña:', error);
+
+    if (error.message === 'Código de restablecimiento inválido') {
+      return res.status(400).json({ error: 'El código de restablecimiento proporcionado es inválido o ha expirado. Solicita un nuevo restablecimiento.' });
+    }
+
+    // Manejar otros errores
+    res.status(500).json({ mensaje: 'Error interno del servidor' });
+  }
+
+
+
+};
 
 module.exports = controller;
