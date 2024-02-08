@@ -1,26 +1,30 @@
 const jwt = require('jsonwebtoken');
-const User = require('../models/user.model');
 
-const verificarToken = async (req, res, next) => {
-  const token = req.header('Authorization');
-
-  if (!token) {
-    return res.status(401).json({ error: 'Acceso no autorizado. Token no proporcionado.' });
-  }
-
+const verificarToken = (req, res, next) => {
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded.user_id);
+    const token = req.headers.authorization;
 
-    if (!user) {
-      return res.status(401).json({ error: 'Acceso no autorizado. Usuario no encontrado.' });
+    if (!token) {
+      return res.status(401).json({ error: 'Token no proporcionado' });
     }
 
-    req.user = user; // Agrega el usuario al objeto de solicitud para que esté disponible en las rutas protegidas
+    // Extraer el token sin el prefijo Bearer
+    const tokenBearer = token.split(' ')[1];
+
+    const decoded = jwt.verify(tokenBearer, process.env.JWT_SECRET);
+
+    if (!decoded) {
+      return res.status(401).json({ error: 'Token no válido' });
+    }
+
+    // Asignar el usuario decodificado a la solicitud
+    req.user = decoded;
+
     next();
-  } catch (error) {
-    console.error('Error al verificar el token:', error);
-    return res.status(401).json({ error: 'Acceso no autorizado. Token inválido.' });
+
+  } catch (e) {
+    console.error('Error al verificar el token:', e);
+    res.status(401).json({ error: 'Token no válido' });
   }
 };
 

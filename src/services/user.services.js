@@ -2,6 +2,8 @@ const bcrypt = require('bcrypt');
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const nodemailer = require('nodemailer');
+
 
 // Crear usuarios
 const createUser = async (req, res) => {
@@ -74,6 +76,7 @@ const loginUser = async (req, res) => {
 function crearToken(user) {
   const payload = {
     user_id: user._id,
+    user_roles: [user.rol]
   };
   return jwt.sign(payload,  process.env.JWT_SECRET, { expiresIn: '1h' });
 }
@@ -106,6 +109,72 @@ const changeUserPassword = async (userId, newPassword) => {
 };
 
 
+//restablecer contraseña
+
+const generarCodigoRestablecimiento = () => {
+  return Math.random().toString(36).substring(2, 8).toUpperCase(); 
+};
+
+const enviarCorreoRestablecimiento = async (email, codigo) => {
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    service: 'gmail',
+    auth: {
+      user: 'litterbox212@gmail.com',
+      pass: 'rtpr yunf crkt daif'
+    }
+  });
+
+  const mailOptions = {
+      from: 'litterbox212@gmail.com',
+      to: email,
+      subject: 'Código de Restablecimiento de Contraseña',
+      text: `Tu código de restablecimiento es: ${codigo}`,
+  };
+
+  try {
+      await transporter.sendMail(mailOptions);
+      console.log('Correo de restablecimiento enviado a', email);
+  } catch (error) {
+      console.error('Error al enviar el correo de restablecimiento:', error);
+      throw error;
+  }
+};
+
+const restablecerContraseña = async (email, codigo, nuevaContraseña) => {
+  try {
+    console.log(`Intento de restablecimiento de contraseña para ${email} con código ${codigo}`);
+
+    const usuario = await User.findOne({ resetCode: codigo, email: email });
+
+    if (!usuario) {
+      console.error(`Código de restablecimiento inválido para ${email}: ${codigo}`);
+      throw new Error('Código de restablecimiento inválido');
+    }
+
+    // Verificar la vigencia del código de restablecimiento
+    if (usuario.resetExpires < Date.now()) {
+      console.error(`El código de restablecimiento ha caducado para ${email}: ${codigo}`);
+      throw new Error('El código de restablecimiento ha caducado');
+    }
+
+    console.log(`Usuario encontrado para ${email}:`, usuario);
+
+    // Restablecer la contraseña y limpiar el código
+    usuario.password = await bcrypt.hash(nuevaContraseña, 12);
+    usuario.resetCode = null;
+    usuario.resetExpires = null; // Limpiar también la marca de tiempo de expiración
+    await usuario.save();
+
+    return { success: 'Contraseña restablecida con éxito' };
+  } catch (error) {
+    console.error('Error al restablecer la contraseña:', error);
+    throw error;
+  }
+}
+
+
 
 
 module.exports = {
@@ -113,5 +182,8 @@ module.exports = {
   loginUser,
   getUsers,
   activeUser,
-  changeUserPassword
+  changeUserPassword,
+  generarCodigoRestablecimiento,
+  enviarCorreoRestablecimiento,
+  restablecerContraseña,
 };

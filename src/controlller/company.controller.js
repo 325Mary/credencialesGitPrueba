@@ -4,7 +4,8 @@ const {
   newCompanyService,
   getCompanies,
   deleteCompany,
-  approveCompany
+  approveCompany,
+  getCompaniesSuperUsuario
 } = require("../services/company.service");
 
 Controller.createCompany = async (req, res) => {
@@ -32,10 +33,17 @@ Controller.getCompanies = async (req, res) => {
   res.json(listCompanies);
 };
 
+
 Controller.deleteCompany = async (req, res) => {
   const idParam = req.params.idCompany;
   const response = await deleteCompany(idParam);
   res.send(response);
 };
+
+Controller.getCompaniesSuperU = async (req, res) => {
+  const listCompanies = await getCompaniesSuperUsuario();
+  res.json(listCompanies);
+};
+
 
 module.exports = Controller;

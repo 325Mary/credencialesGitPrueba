@@ -24,7 +24,9 @@ const userSchema= new Schema({
         enum: ['inactivo', 'activo'],
         default: 'inactivo'
     },
-    firstLogin: { type: Boolean, default: true }
+    firstLogin: { type: Boolean, default: true },
+    resetCode: { type: String, default: null },
+  resetExpires: { type: Date, default: null }
     
     
     

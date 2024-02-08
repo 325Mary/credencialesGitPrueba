@@ -103,6 +103,7 @@ const approveCompany = async (companyId) => {
 
 const getCompanies = async () => {
   try {
+    
     const approvedCompanies = await Company.find({ estado: 'aprobado' });
     return approvedCompanies;
   } catch (error) {
@@ -110,6 +111,15 @@ const getCompanies = async () => {
   }
 };
 
+const getCompaniesSuperUsuario = async () => {
+  try {
+    
+    const approvedCompanies = await Company.find();
+    return approvedCompanies;
+  } catch (error) {
+    throw new Error("Error al obtener las empresas aprobadas: " + error.message);
+  }
+};
 
 const deleteCompany = async (id) => {
   try {
@@ -129,5 +139,6 @@ module.exports = {
   newCompanyService,
   getCompanies,
   deleteCompany,
-  approveCompany
+  approveCompany,
+  getCompaniesSuperUsuario
 };
