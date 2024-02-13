@@ -18,7 +18,7 @@ const userSchema= new Schema({
     direction: { type: String,
     required: [false, 'direccion es requerida']},
     rol: {type:Schema.Types.ObjectId,
-    required:[true, 'Rol es requerido']},
+    required:[false, 'Rol es requerido']},
     status: {
         type: String,
         enum: ['inactivo', 'activo'],

@@ -164,6 +164,8 @@ const restablecerContraseña = async (email, codigo, nuevaContraseña) => {
     // Restablecer la contraseña y limpiar el código
     usuario.password = await bcrypt.hash(nuevaContraseña, 12);
     usuario.resetCode = null;
+    user.firstLogin = false;
+
     usuario.resetExpires = null; // Limpiar también la marca de tiempo de expiración
     await usuario.save();
 
